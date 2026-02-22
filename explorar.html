@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Explorar </title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --card-bg: #141414;
+            --texto-principal: #ffffff;
+            --texto-secundario: #a0a0a0;
+            --gold: #d4af37;
+            --error: #ff4757;
+        }
+
+        @keyframes fadeInPage {
+            from { opacity: 0; transform: scale(1.02); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            -webkit-user-select: none; user-select: none;
+        }
+
+        img, video { pointer-events: none; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--texto-principal);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            animation: fadeInPage 0.6s ease-out;
+            overflow-x: hidden;
+        }
+
+        #toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--gold); color: #000; padding: 12px 25px;
+            border-radius: 30px; font-size: 0.8rem; font-weight: 600;
+            z-index: 10001; display: none; animation: slideIn 0.3s ease-out;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        .explore-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 20px;
+        }
+
+        .header-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .btn-back {
+            color: var(--texto-secundario);
+            text-decoration: none;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        .btn-back:hover { color: var(--gold); transform: translateX(-5px); }
+
+        .page-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        .categories {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            scrollbar-width: none;
+        }
+        .categories::-webkit-scrollbar { display: none; }
+
+        .cat-item {
+            padding: 8px 20px;
+            border: 1px solid #1a1a1a;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            color: var(--texto-secundario);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .cat-item.active, .cat-item:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .explore-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .explore-item {
+            aspect-ratio: 1/1;
+            background: var(--card-bg);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .explore-item img, .explore-item video { 
+            width: 100%; height: 100%; object-fit: cover; 
+            display: block;
+        }
+        
+        .viewer-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.98); backdrop-filter: blur(15px);
+            z-index: 9999; flex-direction: column; align-items: center; justify-content: flex-start;
+            overflow-y: auto;
+        }
+        
+        /* REMOVIDO FUNDO CINZA E FORÇADO PRETO */
+        #media-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+            background: #000 !important;
+        }
+
+        #media-container img, #media-container video { 
+            width: 100%;
+            max-width: 100vw;
+            max-height: 70vh;
+            object-fit: contain;
+            display: block;
+            pointer-events: auto;
+            background: #000; /* Garante fundo preto no próprio elemento */
+        }
+
+        .comments-section {
+            width: 100%; max-width: 600px; background: #111; border-radius: 30px 30px 0 0;
+            padding: 25px 20px; min-height: 50vh; display: flex; flex-direction: column;
+            user-select: text; -webkit-user-select: text;
+        }
+
+        .comment-item { margin-bottom: 15px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
+        .comment-user { color: var(--gold); font-size: 0.75rem; font-weight: 600; margin-bottom: 3px; display: block; }
+        .comment-text { font-size: 0.85rem; color: #ccc; word-wrap: break-word; }
+
+        .comment-input-area { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 20px; }
+        .comment-input-area input, .comment-input-area textarea {
+            background: #0a0a0a; border: 1px solid #222; border-radius: 8px;
+            color: #fff; padding: 12px; font-family: inherit; font-size: 0.85rem; outline: none;
+        }
+        .btn-send { background: var(--gold); color: #000; border: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
+
+        .close-btn { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer; z-index: 10000; text-shadow: 0 0 10px #000; }
+        
+        .limit-info { font-size: 0.65rem; color: #555; text-align: right; margin-top: 5px; text-transform: uppercase; }
+
+        footer { padding: 40px; font-size: 0.7rem; color: #333; letter-spacing: 2px; text-align: center; text-transform: uppercase; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="toast"></div>
+
+    <div class="viewer-overlay" id="imageViewer">
+        <span class="close-btn" onclick="closeViewer()">×</span>
+        <div id="media-container" onclick="event.stopPropagation()"></div>
+        
+        <div class="comments-section" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 0.8rem; letter-spacing: 2px; color: var(--gold);">COMENTÁRIOS</h3>
+                <span id="comment-counter" style="font-size: 0.7rem; color: #444;">0/10</span>
+            </div>
+            
+            <div id="comments-list" style="flex-grow: 1; overflow-y: auto; max-height: 300px;"></div>
+            
+            <div class="comment-input-area" id="input-container">
+                <input type="text" id="user-name" placeholder="Nome">
+                <input type="text" id="user-at" placeholder="@usuario" style="text-transform: lowercase;">
+                <textarea id="comment-text" placeholder="Sua mensagem..." rows="2"></textarea>
+                <button class="btn-send" id="btn-comentar">Publicar</button>
+                <p class="limit-info">Limite de 10 comentários por post</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="explore-container">
+        <nav class="header-nav">
+            <a href="slvz.html" class="btn-back">← Voltar</a>
+            <h2 class="page-title">Explorar</h2>
+            <div style="width: 50px;"></div>
+        </nav>
+
+        <div class="categories" id="cat-list">
+            <div class="cat-item active" data-filter="TUDO">TUDO</div>
+            <div class="cat-item" data-filter="recentes">RECENTES</div>
+            <div class="cat-item" data-filter="edits">EDITS</div>
+            <div class="cat-item" data-filter="limitado">LIMITADO</div>
+            <div class="cat-item" data-filter="arquivo">ARQUIVO</div>
+            <div class="cat-item" data-filter="videos">VIDEOS</div>
+        </div>
+
+        <main class="explore-grid" id="explore-gallery">
+            <div style="grid-column: span 3; text-align: center; color: #222; padding: 50px; letter-spacing: 2px;">
+                CARREGANDO...
+            </div>
+        </main>
+    </div>
+
+    <footer>© 2026 // VICTOR SILVA</footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, where, Timestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3P83r_6WI_u4ujwiocOn44eWUzbouL8Y",
+            authDomain: "slvz-2e272.firebaseapp.com",
+            projectId: "slvz-2e272",
+            storageBucket: "slvz-2e272.firebasestorage.app",
+            messagingSenderId: "638254582168",
+            appId: "1:638254582168:web:6f343f9030d2f02c5683ed"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let unsubscribeExplore = null;
+        let unsubscribeComments = null;
+        let currentPostId = null;
+        let commentCount = 0;
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.background = isError ? "var(--error)" : "var(--gold)";
+            t.style.color = isError ? "#fff" : "#000";
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        function isVideo(url) {
+            const urlLower = url.toLowerCase();
+            return urlLower.includes('.mp4') || urlLower.includes('.mov') || urlLower.includes('.webm');
+        }
+
+        function loadExplore(filterValue = 'TUDO') {
+            const gallery = document.getElementById('explore-gallery');
+            if (unsubscribeExplore) unsubscribeExplore();
+
+            let q;
+            if (filterValue === 'recentes') {
+                const seteDiasAtras = new Date();
+                seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+                q = query(collection(db, "posts"), where("dataPost", ">=", Timestamp.fromDate(seteDiasAtras)));
+            } else if (filterValue === 'TUDO') {
+                q = query(collection(db, "posts"));
+            } else {
+                q = query(collection(db, "posts"), where("categoria", "==", filterValue));
+            }
+
+            unsubscribeExplore = onSnapshot(q, (querySnapshot) => {
+                gallery.innerHTML = "";
+                if (querySnapshot.empty) {
+                    gallery.innerHTML = `<div style="grid-column: span 3; color: #333; padding: 50px; text-align:center;">VAZIO.</div>`;
+                    return;
+                }
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const url = data.image;
+                    
+                    let content = "";
+                    if (isVideo(url)) {
+                        content = `
+                            <div class="explore-item" onclick="openViewer('${url}', '${doc.id}')">
+                                <video src="${url}" muted loop autoplay playsinline></video>
+                            </div>
+                        `;
+                    } else {
+                        content = `
+                            <div class="explore-item" onclick="openViewer('${url}', '${doc.id}')">
+                                <img src="${url}" alt="Explorar">
+                            </div>
+                        `;
+                    }
+                    gallery.innerHTML += content;
+                });
+            });
+        }
+
+        /* AJUSTADO PARA DAR PLAY AUTOMÁTICO COM SOM */
+        window.openViewer = (url, postId) => {
+            currentPostId = postId;
+            const container = document.getElementById('media-container');
+            
+            if (isVideo(url)) {
+                // Autoplay sem muted e com controles
+                container.innerHTML = `<video id="viewedMedia" src="${url}" autoplay loop controls playsinline></video>`;
+                // Reforço via código para o navegador não bloquear o play
+                const videoElement = container.querySelector('video');
+                videoElement.play().catch(e => console.log("Autoplay bloqueado pelo browser, requer interação."));
+            } else {
+                container.innerHTML = `<img id="viewedMedia" src="${url}" alt="Visualização">`;
+            }
+
+            document.getElementById('imageViewer').style.display = 'flex';
+            loadComments(postId);
+        };
+
+        function loadComments(postId) {
+            const list = document.getElementById('comments-list');
+            const counter = document.getElementById('comment-counter');
+            const inputArea = document.getElementById('input-container');
+
+            if (unsubscribeComments) unsubscribeComments();
+
+            const q = query(collection(db, "comments"), where("postId", "==", postId));
+            
+            unsubscribeComments = onSnapshot(q, (snapshot) => {
+                list.innerHTML = "";
+                commentCount = snapshot.size;
+                counter.innerText = `${commentCount}/10`;
+
+                inputArea.style.opacity = commentCount >= 10 ? "0.3" : "1";
+                inputArea.style.pointerEvents = commentCount >= 10 ? "none" : "auto";
+
+                if (snapshot.empty) {
+                    list.innerHTML = "<p style='color:#333; font-size:0.7rem; text-align:center; padding:20px;'>NENHUM COMENTÁRIO AINDA.</p>";
+                }
+
+                snapshot.forEach(doc => {
+                    const c = doc.data();
+                    list.innerHTML += `
+                        <div class="comment-item">
+                            <span class="comment-user">${c.nome} <small style="color:#444">@${c.userAt}</small></span>
+                            <p class="comment-text">${c.texto}</p>
+                        </div>
+                    `;
+                });
+                list.scrollTop = list.scrollHeight;
+            });
+        }
+
+        document.getElementById('btn-comentar').onclick = async () => {
+            const nomeInput = document.getElementById('user-name');
+            const atInput = document.getElementById('user-at');
+            const textInput = document.getElementById('comment-text');
+
+            const nome = nomeInput.value.trim();
+            const userAt = atInput.value.trim().replace('@', '').toLowerCase();
+            const texto = textInput.value.trim();
+
+            if (!nome || !userAt || !texto) {
+                showToast("Preencha tudo!", true);
+                return;
+            }
+
+            if (commentCount >= 10) {
+                showToast("Limite atingido (10/10)", true);
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "comments"), {
+                    postId: currentPostId,
+                    nome: nome,
+                    userAt: userAt,
+                    texto: texto,
+                    timestamp: Timestamp.now()
+                });
+                
+                textInput.value = "";
+                showToast("Publicado!");
+            } catch (e) { 
+                showToast("Erro ao salvar", true);
+            }
+        };
+
+        window.closeViewer = () => {
+            const container = document.getElementById('media-container');
+            container.innerHTML = ""; 
+            document.getElementById('imageViewer').style.display = 'none';
+            if (unsubscribeComments) unsubscribeComments();
+        };
+
+        document.querySelectorAll('.cat-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                loadExplore(this.getAttribute('data-filter'));
+            });
+        });
+
+        loadExplore();
+    </script>
+
+    <script>
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 83))) {
+                return false;
+            }
+        };
+    </script>
+</body>
+</html>

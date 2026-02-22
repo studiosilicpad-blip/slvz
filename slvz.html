@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>slvz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --card-bg: #141414;
+            --texto-principal: #ffffff;
+            --texto-secundario: #a0a0a0;
+            --gold: #d4af37;
+        }
+
+        /* --- ANIMAÇÕES --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulseGold {
+            0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        }
+
+        @keyframes rotateFrame { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        @keyframes metalShine {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.5) drop-shadow(0 0 5px #fff); }
+        }
+
+        .page-exit {
+            opacity: 0 !important;
+            transform: scale(0.98) !important;
+            transition: 0.5s ease-in-out !important;
+        }
+
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            -webkit-user-select: none; user-select: none;
+        }
+
+        img, video { pointer-events: none; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--texto-principal);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            min-height: 100vh;
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .main-container { 
+            width: 100%; 
+            max-width: 600px; 
+            padding-bottom: 50px;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        /* --- BANNER --- */
+        .banner-container {
+            width: 100%; height: 180px; background: #111;
+            overflow: hidden; position: relative; cursor: pointer;
+        }
+        .banner-gif { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: 0.5s; }
+        .banner-container:hover .banner-gif { opacity: 1; transform: scale(1.05); }
+
+        /* --- PERFIL --- */
+        .profile-header {
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; margin-top: -60px; position: relative; padding: 0 20px;
+        }
+
+        .avatar-wrapper {
+            position: relative; width: 120px; height: 120px;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 15px; cursor: pointer;
+        }
+
+        .avatar-frame {
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent, var(--gold), transparent, #fff, transparent);
+            animation: rotateFrame 4s linear infinite;
+        }
+
+        .avatar-container { position: relative; width: 110px; height: 110px; z-index: 2; }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--bg); background: var(--bg); transition: 0.3s; pointer-events: auto; }
+        .avatar-wrapper:hover .avatar { transform: scale(1.05); }
+
+        .name-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+        .name-row h1 { font-size: 1.4rem; font-weight: 600; }
+
+        .verified-badge svg {
+            fill: url(#goldGradient);
+            filter: drop-shadow(0 0 2px rgba(212, 175, 55, 0.4));
+            animation: metalShine 3s linear infinite;
+        }
+
+        .username { color: var(--texto-secundario); font-size: 0.9rem; margin-bottom: 15px; display: block; }
+        .bio { font-size: 0.95rem; line-height: 1.5; color: #d1d1d1; max-width: 400px; }
+
+        hr { border: none; border-top: 1px solid #1a1a1a; margin: 30px 20px; }
+
+        /* --- GALERIA GRID --- */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0 20px;
+        }
+
+        .post-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 1/1;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .post-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .post-card img, .post-card video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        
+        .post-like {
+            position: absolute; bottom: 12px; right: 12px;
+            background: rgba(0,0,0,0.6); border: none;
+            color: #fff; width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px); transition: 0.3s;
+            z-index: 5;
+        }
+        .post-like.active { color: #ff4757 !important; }
+
+        /* --- BOTÃO EXPLORAR --- */
+        .explore-container { display: flex; justify-content: center; margin-top: 40px; padding: 0 20px; }
+        .btn-explore {
+            background: transparent; border: 1px solid var(--gold);
+            color: var(--gold); padding: 14px 50px; border-radius: 30px;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px;
+            cursor: pointer; transition: 0.4s; animation: pulseGold 2s infinite;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-explore:hover { background: var(--gold); color: #000; letter-spacing: 5px; }
+
+        footer {
+            width: 100%; text-align: center; padding: 40px 20px;
+            font-size: 0.75rem; color: #444; letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        footer b { color: var(--gold); }
+
+        /* --- VISUALIZADOR --- */
+        .viewer-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.98); backdrop-filter: blur(15px);
+            z-index: 9999; justify-content: center; align-items: center; cursor: zoom-out;
+        }
+        .viewer-overlay #media-content { 
+            max-width: 90%; max-height: 80%; border-radius: 15px; 
+            transform: scale(0.9); transition: 0.3s; pointer-events: auto; 
+            overflow: hidden; display: flex; justify-content: center;
+            background: #000; /* Garante fundo preto no visualizador */
+        }
+        .viewer-overlay img, .viewer-overlay video { 
+            width: 100%; height: auto; max-height: 80vh; 
+            border-radius: 15px; object-fit: contain; 
+            pointer-events: auto; /* Permite interagir com controles */
+        }
+        .viewer-overlay.active #media-content { transform: scale(1); }
+    </style>
+</head>
+<body oncontextmenu="return false;"> 
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#b8860b;" />
+                <stop offset="20%" style="stop-color:#e2e2e2;" />
+                <stop offset="50%" style="stop-color:#d4af37;" />
+                <stop offset="100%" style="stop-color:#b8860b;" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <div class="viewer-overlay" id="imageViewer" onclick="closeViewer()">
+        <div id="media-content">
+            </div>
+    </div>
+
+    <div class="main-container" id="content-wrap">
+        <section class="banner-container" onclick="openViewer('https://cdn.discordapp.com/attachments/1468624473594003743/1475271076396273664/lv_0_20260222201731.gif?ex=699ce0c1&is=699b8f41&hm=638126c29c14965fe58cd7e3bd3801c85e75b3bd6ad1eb2494d3ab22e9a9e615&')">
+            <img src="https://cdn.discordapp.com/attachments/1468624473594003743/1475271076396273664/lv_0_20260222201731.gif?ex=699ce0c1&is=699b8f41&hm=638126c29c14965fe58cd7e3bd3801c85e75b3bd6ad1eb2494d3ab22e9a9e615&" class="banner-gif">
+        </section>
+
+        <header class="profile-header">
+            <div class="avatar-wrapper" onclick="openViewer('https://cdn.discordapp.com/attachments/1468624473594003743/1475226435546386543/IMG_20260222_172257.png?ex=699cb72e&is=699b65ae&hm=866642045485cde45f2417cc03afd2017a995d9b9de5b56995a45fcfc0103c4b&')">
+                <div class="avatar-frame"></div>
+                <div class="avatar-container">
+                    <img src="https://cdn.discordapp.com/attachments/1468624473594003743/1475226435546386543/IMG_20260222_172257.png?ex=699cb72e&is=699b65ae&hm=866642045485cde45f2417cc03afd2017a995d9b9de5b56995a45fcfc0103c4b&" class="avatar">
+                </div>
+            </div>
+
+            <div class="name-row">
+                <h1>Victor Silva</h1>
+                <span class="verified-badge">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </span>
+            </div>
+            <span class="username">@vtslvz</span>
+            <p class="bio">𝔏𝔦𝔪𝔦𝔱𝔢𝔡 𝔈𝔡𝔦𝔱𝔦𝔬𝔫. <br> 愛.</p>
+        </header>
+
+        <hr>
+
+        <main class="gallery-grid" id="firebase-gallery">
+            <div style="grid-column: span 2; text-align: center; color: #222; font-size: 0.7rem; letter-spacing: 2px;">
+                CONECTANDO AO MURAL...
+            </div>
+        </main>
+
+        <div class="explore-container">
+            <a href="explorar.html" class="btn-explore" id="exploreBtn">Explorar</a>
+        </div>
+    </div>
+
+    <footer>
+        © 2026 // <b>VICTOR SILVA</b> <br>
+        TODOS OS DIREITOS RESERVADOS.
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3P83r_6WI_u4ujwiocOn44eWUzbouL8Y",
+            authDomain: "slvz-2e272.firebaseapp.com",
+            projectId: "slvz-2e272",
+            storageBucket: "slvz-2e272.firebasestorage.app",
+            messagingSenderId: "638254582168",
+            appId: "1:638254582168:web:6f343f9030d2f02c5683ed"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Função auxiliar para detectar vídeo
+        function isVideo(url) {
+            return url.match(/\.(mp4|webm|ogg|mov)/i);
+        }
+
+        window.toggleLike = function(postId, btn) {
+            let likedPosts = JSON.parse(localStorage.getItem('likedPosts')) || {};
+            if (likedPosts[postId]) {
+                delete likedPosts[postId];
+                btn.classList.remove('active');
+            } else {
+                likedPosts[postId] = true;
+                btn.classList.add('active');
+            }
+            localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+        }
+
+        function listenToPosts() {
+            const gallery = document.getElementById('firebase-gallery');
+            const likedPosts = JSON.parse(localStorage.getItem('likedPosts')) || {};
+            
+            onSnapshot(collection(db, "posts"), (querySnapshot) => {
+                gallery.innerHTML = ""; 
+                if (querySnapshot.empty) {
+                    gallery.innerHTML = "<p style='grid-column: span 2; font-size: 0.7rem; color: #333; text-align:center;'>NENHUMA PUBLICAÇÃO.</p>";
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const postId = doc.id;
+                    const url = data.image;
+                    const isLiked = likedPosts[postId] ? 'active' : '';
+
+                    let mediaHTML = isVideo(url) 
+                        ? `<video src="${url}" muted loop autoplay playsinline></video>` 
+                        : `<img src="${url}" alt="Post">`;
+
+                    const postHTML = `
+                        <div class="post-card" onclick="openViewer('${url}')" style="opacity: 1;">
+                            ${mediaHTML}
+                            <button class="post-like ${isLiked}" onclick="event.stopPropagation(); toggleLike('${postId}', this)">❤</button>
+                        </div>
+                    `;
+                    gallery.innerHTML += postHTML;
+                });
+            });
+        }
+
+        listenToPosts();
+
+        // Expõe as funções para o escopo global
+        window.openViewer = (url) => {
+            const viewer = document.getElementById('imageViewer');
+            const content = document.getElementById('media-content');
+            
+            if (isVideo(url)) {
+                // Removido o 'muted' e adicionado 'controls' + play automático
+                content.innerHTML = `<video id="viewedMedia" src="${url}" autoplay loop controls playsinline></video>`;
+                const v = document.getElementById('viewedMedia');
+                v.play().catch(() => console.log("Interação necessária para som"));
+            } else {
+                content.innerHTML = `<img src="${url}" alt="Visualização">`;
+            }
+
+            viewer.style.display = 'flex';
+            setTimeout(() => viewer.classList.add('active'), 10);
+        };
+
+        window.closeViewer = () => {
+            const viewer = document.getElementById('imageViewer');
+            viewer.classList.remove('active');
+            setTimeout(() => {
+                viewer.style.display = 'none';
+                document.getElementById('media-content').innerHTML = "";
+            }, 300);
+        };
+    </script>
+
+    <script>
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 83))) {
+                return false;
+            }
+        };
+
+        document.getElementById('exploreBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = this.getAttribute('href');
+            document.body.classList.add('page-exit');
+            setTimeout(() => { window.location.href = target; }, 500);
+        });
+    </script>
+</body>
+</html>
