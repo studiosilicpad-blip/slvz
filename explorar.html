@@ -25,9 +25,11 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        /* PROTEÇÃO: Impede seleção e menu de contexto no iOS */
         * { 
             margin: 0; padding: 0; box-sizing: border-box; 
             -webkit-user-select: none; user-select: none;
+            -webkit-touch-callout: none;
         }
 
         img, video { pointer-events: none; }
@@ -42,6 +44,7 @@
             min-height: 100vh;
             animation: fadeInPage 0.6s ease-out;
             overflow-x: hidden;
+            transition: filter 0.3s, opacity 0.3s;
         }
 
         #toast {
@@ -128,6 +131,15 @@
             position: relative;
         }
 
+        /* PROTEÇÃO: Overlay invisível sobre os itens da grade */
+        .explore-item::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 5;
+            background: rgba(0,0,0,0);
+        }
+
         .explore-item img, .explore-item video { 
             width: 100%; height: 100%; object-fit: cover; 
             display: block;
@@ -140,13 +152,21 @@
             overflow-y: auto;
         }
         
-        /* REMOVIDO FUNDO CINZA E FORÇADO PRETO */
         #media-container {
             width: 100%;
             display: flex;
             justify-content: center;
             padding: 20px 0;
             background: #000 !important;
+            position: relative;
+        }
+
+        /* PROTEÇÃO: Overlay invisível sobre a mídia aberta */
+        #media-container::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10000;
         }
 
         #media-container img, #media-container video { 
@@ -156,7 +176,7 @@
             object-fit: contain;
             display: block;
             pointer-events: auto;
-            background: #000; /* Garante fundo preto no próprio elemento */
+            background: #000;
         }
 
         .comments-section {
@@ -176,7 +196,7 @@
         }
         .btn-send { background: var(--gold); color: #000; border: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
 
-        .close-btn { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer; z-index: 10000; text-shadow: 0 0 10px #000; }
+        .close-btn { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer; z-index: 10001; text-shadow: 0 0 10px #000; }
         
         .limit-info { font-size: 0.65rem; color: #555; text-align: right; margin-top: 5px; text-transform: uppercase; }
 
@@ -223,7 +243,7 @@
             <div class="cat-item" data-filter="limitado">LIMITADO</div>
             <div class="cat-item" data-filter="videos">VIDEOS</div>
             <div class="cat-item" data-filter="filosofia">MINHAS FILOSOFIA?</div>
-            <div class="cat-item" data-filter="vibed">VIBES</div>
+            <div class="cat-item" data-filter="">EM BREVE</div>
         </div>
 
         <main class="explore-grid" id="explore-gallery">
@@ -313,17 +333,14 @@
             });
         }
 
-        /* AJUSTADO PARA DAR PLAY AUTOMÁTICO COM SOM */
         window.openViewer = (url, postId) => {
             currentPostId = postId;
             const container = document.getElementById('media-container');
             
             if (isVideo(url)) {
-                // Autoplay sem muted e com controles
                 container.innerHTML = `<video id="viewedMedia" src="${url}" autoplay loop controls playsinline></video>`;
-                // Reforço via código para o navegador não bloquear o play
                 const videoElement = container.querySelector('video');
-                videoElement.play().catch(e => console.log("Autoplay bloqueado pelo browser, requer interação."));
+                videoElement.play().catch(e => console.log("Autoplay bloqueado pelo browser."));
             } else {
                 container.innerHTML = `<img id="viewedMedia" src="${url}" alt="Visualização">`;
             }
@@ -421,10 +438,21 @@
 
     <script>
         document.onkeydown = function(e) {
-            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 83))) {
+            if(e.keyCode == 123 || 
+               (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || 
+               (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 83 || e.keyCode == 80))) {
                 return false;
             }
         };
+
+        // PROTEÇÃO: Blur ao perder o foco
+        window.addEventListener('blur', () => { document.body.style.filter = 'blur(20px)'; });
+        window.addEventListener('focus', () => { document.body.style.filter = 'none'; });
+
+        // PROTEÇÃO MOBILE: Esconde ao minimizar
+        document.addEventListener("visibilitychange", function() {
+            document.body.style.opacity = document.hidden ? "0" : "1";
+        });
     </script>
 </body>
 </html>
