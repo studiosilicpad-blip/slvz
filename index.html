@@ -39,9 +39,11 @@
             transition: 0.5s ease-in-out !important;
         }
 
+        /* PROTEÇÃO: Impede seleção e arraste */
         * { 
             margin: 0; padding: 0; box-sizing: border-box; 
             -webkit-user-select: none; user-select: none;
+            -webkit-touch-callout: none; /* Impede menu de salvar imagem no iOS */
         }
 
         img, video { pointer-events: none; }
@@ -55,7 +57,7 @@
             align-items: center;
             overflow-x: hidden;
             min-height: 100vh;
-            transition: opacity 0.5s, transform 0.5s;
+            transition: opacity 0.5s, transform 0.5s, filter 0.3s;
         }
 
         .main-container { 
@@ -130,6 +132,15 @@
             animation: fadeInUp 0.6s ease-out forwards;
         }
 
+        /* PROTEÇÃO: Camada invisível que impede clique longo em imagens */
+        .post-card::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 4;
+            background: rgba(0,0,0,0);
+        }
+
         .post-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
         .post-card img, .post-card video { width: 100%; height: 100%; object-fit: cover; display: block; }
         
@@ -139,7 +150,7 @@
             color: #fff; width: 32px; height: 32px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             backdrop-filter: blur(5px); transition: 0.3s;
-            z-index: 5;
+            z-index: 6; /* Acima do overlay de proteção */
         }
         .post-like.active { color: #ff4757 !important; }
 
@@ -172,7 +183,17 @@
             transform: scale(0.9); transition: 0.3s; pointer-events: auto; 
             overflow: hidden; display: flex; justify-content: center;
             background: #000;
+            position: relative;
         }
+
+        /* Overlay de proteção dentro do visualizador */
+        .viewer-overlay #media-content::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10000;
+        }
+
         .viewer-overlay img, .viewer-overlay video { 
             width: 100%; height: auto; max-height: 80vh; 
             border-radius: 15px; object-fit: contain; 
@@ -217,7 +238,7 @@
                 </span>
             </div>
             <span class="username">@vtslvz</span>
-            <p class="bio">𝖑𝖎𝖒𝖎𝖙𝖊𝖉 𝖊𝖉𝖎𝖙𝖎𝖔𝖓. <br> 𝖖𝖚𝖊𝖒 𝖙𝖆 𝖊 𝖊𝖚, 𝖓𝖔𝖘 𝖊 𝖒𝖚𝖎𝖙𝖆 𝖌𝖊𝖓𝖙𝖊!!<br> 𝕲𝖔𝖉 𝖎𝖘 𝖐𝖎𝖓𝖌. <br> 愛.</p>
+            <p class="bio">𝔏𝔦𝔪𝔦𝔱𝔢𝔡 𝔈𝔡𝔦𝔱𝔦𝔬𝔫. <br> 愛.</p>
         </header>
 
         <hr>
@@ -274,7 +295,6 @@
             const gallery = document.getElementById('firebase-gallery');
             const likedPosts = JSON.parse(localStorage.getItem('likedPosts')) || {};
             
-            // Consulta que filtra apenas ordem 1 ou 2
             const q = query(
                 collection(db, "posts"), 
                 where("ordem", "in", [1, 2]),
@@ -338,12 +358,34 @@
     </script>
 
     <script>
+        // PROTEÇÃO: Atalhos de teclado
         document.onkeydown = function(e) {
-            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 83))) {
+            // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S, Ctrl+P (Print)
+            if(e.keyCode == 123 || 
+               (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || 
+               (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 83 || e.keyCode == 80))) {
                 return false;
             }
         };
 
+        // PROTEÇÃO: Blur ao perder o foco (Dificulta print no PC/Mac)
+        window.addEventListener('blur', () => {
+            document.body.style.filter = 'blur(20px)';
+        });
+        window.addEventListener('focus', () => {
+            document.body.style.filter = 'none';
+        });
+
+        // PROTEÇÃO MOBILE: Esconde conteúdo ao trocar de aba/minimizar
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden) {
+                document.body.style.opacity = "0";
+            } else {
+                document.body.style.opacity = "1";
+            }
+        });
+
+        // Efeito de transição do botão explorar
         document.getElementById('exploreBtn').addEventListener('click', function(e) {
             e.preventDefault();
             const target = this.getAttribute('href');
